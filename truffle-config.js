@@ -54,6 +54,12 @@ module.exports = {
       timeoutBlocks: 200,
       skipDryRun: true,
     },
+    kovan: {
+      provider: () => new HDWalletProvider(mnemonic, `wss://kovan.infura.io/ws/v3/17acec9c18964167b6ccd62dcaf5559d`),
+      gas: 5000000,
+      gasPrice: 25000000000,
+      network_id: 42
+    },
     bsc: {
       provider: () => new HDWalletProvider(mnemonic, `https://bsc-dataseed1.binance.org`),
       network_id: 56,
@@ -98,13 +104,13 @@ module.exports = {
     solc: {
       version: "^0.8.0",    // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
-      // settings: {          // See the solidity docs for advice about optimization and evmVersion
-      //  optimizer: {
-      //    enabled: false,
-      //    runs: 200
-      //  },
-      //  evmVersion: "byzantium"
-      // }
+      settings: {          // See the solidity docs for advice about optimization and evmVersion
+       optimizer: {
+         enabled: false,
+         runs: 200
+       },
+       evmVersion: "byzantium"
+      }
     }
   }
 };

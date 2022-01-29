@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectPlainTextFileTypeManager">
+    <file url="file://$PROJECT_DIR$/build/contracts/Address.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/Blacklistable.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/Context.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/Counters.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/ERC165.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/ERC721.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/ERC721Enumerable.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/ERC721URIStorage.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/IBEP20.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/IERC165.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/IERC721.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/IERC721Enumerable.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/IERC721Metadata.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/IERC721Receiver.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/IPiratesKingBase.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/IPiratesKingChest.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/Migrations.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/Ownable.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/Pausable.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/PiratesKingCharacter.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/PiratesKingChest.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/PiratesKingToken.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/SafeMath.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/SafeMath16.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/SafeMath24.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/SafeMath32.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/SafeMath8.json" />
+    <file url="file://$PROJECT_DIR$/build/contracts/Strings.json" />
+  </component>
+</project>
