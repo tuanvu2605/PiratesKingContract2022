@@ -24,7 +24,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
     uint256 private _tTotal = 100 * 10**6 * 10**18;
     uint256 private constant MAX = ~uint256(0);
     string private _name = "PiratesKing";
-    string private _symbol = "ABC3";
+    string private _symbol = "PKT";
     uint8 private _decimals = 18;
 
     uint256 public _BNBFee = 5;
