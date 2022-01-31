@@ -8,22 +8,23 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "./IPancakeswapV2Factory.sol";
 import "./IPancakeswapV2Router02.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
-contract PiratesKingToken is Context, IBEP20, Ownable {
+contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
     using SafeMath for uint256;
 
     mapping (address => uint256) private _balances;
     mapping (address => mapping (address => uint256)) private _allowances;
     mapping (address => bool) private _isExcludedFromFee;
 
-    address public bnbPoolAddress;
-    address public prPoolAddress;
+    address payable public bnbPoolAddress;
+    address payable public prPoolAddress;
 
 
     uint256 private _tTotal = 100 * 10**6 * 10**18;
     uint256 private constant MAX = ~uint256(0);
     string private _name = "PiratesKing";
-    string private _symbol = "PKT";
+    string private _symbol = "ABC3";
     uint8 private _decimals = 18;
 
     uint256 public _BNBFee = 5;
@@ -45,7 +46,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     // 00
     uint256 public _maxTxAmount =  7 * 10**6 * 10**18;
     uint256 private numTokensToSwap =  1 * 10**3 * 10**18;
-    uint256 public swapCoolDownTime = 20;
+    uint256 public swapCoolDownTime = 0;
     uint256 private lastSwapTime;
     mapping(address => uint256) private lastTxTimes;
 
@@ -86,7 +87,19 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
         _isExcludedFromFee[_msgSender()] = true;
         _isExcludedFromFee[address(this)] = true;
         _balances[_msgSender()] = _tTotal;
+
+        bnbPoolAddress = payable(0xBa71532C52E78d719Ef9233f9bA9E80Cd3c81727);
+        prPoolAddress = payable(0x18d6444D46D07283c6b9982Ad75fd51d2A7cFeC1);
+
         emit Transfer(address(0), owner(), _tTotal);
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
     }
 
     function symbol() external view override returns (string memory) {
@@ -113,21 +126,21 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
         return _balances[account];
     }
 
-    function transfer(address recipient, uint256 amount) public override returns (bool) {
+    function transfer(address recipient, uint256 amount) public override whenNotPaused returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
 
-    function allowance(address owner, address spender) public view override returns (uint256) {
+    function allowance(address owner, address spender) public view override whenNotPaused returns (uint256) {
         return _allowances[owner][spender];
     }
 
-    function approve(address spender, uint256 amount) public override returns (bool) {
+    function approve(address spender, uint256 amount) public override whenNotPaused returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
 
-    function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
+    function transferFrom(address sender, address recipient, uint256 amount) public override  whenNotPaused returns (bool) {
         _transfer(sender, recipient, amount);
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "BEP20: transfer amount exceeds allowance"));
         return true;
@@ -145,13 +158,13 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
 
     function setBNBPoolAddress(address account) external onlyOwner {
         require(account != bnbPoolAddress, 'This address was already used');
-        bnbPoolAddress = account;
+        bnbPoolAddress = payable(account);
         emit UpdateBNBPoolAddress(account);
     }
 
     function setPRPoolAddress(address account) external onlyOwner {
         require(account != prPoolAddress, 'This address was already used');
-        prPoolAddress = account;
+        prPoolAddress = payable(account);
         emit UpdatePRPoolAddress(account);
     }
     function setCoolDownTime(uint256 timeForContract) external onlyOwner {
@@ -202,9 +215,16 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     //to receive ETH from pancakeswapV2Router when swapping
     receive() external payable {}
 
-    function _getFeeValues(uint256 tAmount) private view returns (uint256) {
+    function _getBuyFeeValues(uint256 tAmount) private view returns (uint256) {
 
         uint256 fee = tAmount.mul(_buyFee).div(10**2);
+        uint256 tTransferAmount = tAmount.sub(fee);
+        return tTransferAmount;
+    }
+
+    function _getSellFeeValues(uint256 tAmount) private view returns (uint256) {
+
+        uint256 fee = tAmount.mul(_BNBFee + _PRFee + _liquidityFee).div(10**2);
         uint256 tTransferAmount = tAmount.sub(fee);
         return tTransferAmount;
     }
@@ -305,7 +325,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     function swapAndCharge(uint256 tokenBalance) private lockTheSwap {
         uint256 initialBalance = address(this).balance;
 
-        uint256 liquidBalance = tokenBalance.mul(_liquidityFee).div(_liquidityFee + _BNBFee + _PRFee);
+        uint256 liquidBalance = tokenBalance.mul(_liquidityFee).div(_liquidityFee + _BNBFee + _PRFee).div(2);
         tokenBalance = tokenBalance.sub(liquidBalance);
         swapTokensForEth(tokenBalance);
 
@@ -313,14 +333,14 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
         uint256 bnbForLiquid = newBalance.mul(liquidBalance).div(tokenBalance);
         addLiquidity(liquidBalance, bnbForLiquid);
 
-        uint256 currentBalance = address(this).balance;
-        uint256 prBalance = currentBalance.mul(_PRFee).div(_BNBFee + _PRFee);
-        uint256 rewardBalance = currentBalance - prBalance;
+        uint256 poolBalance = address(this).balance;
+        uint256 prBalance = poolBalance.div(_BNBFee + _PRFee + _liquidityFee).mul(_PRFee);
+        uint256 rewardBalance = poolBalance - prBalance;
 
-        (bool pool_success, ) = payable(bnbPoolAddress).call{value: rewardBalance}("");
-        (bool pr_success, ) = payable(prPoolAddress).call{value: prBalance}("");
-        require(pool_success == true, "Transfer RewardPool failed.");
-        require(pr_success == true, "Transfer PRPool failed.");
+        (bool r_success, ) = payable(bnbPoolAddress).call{value: rewardBalance}("");
+        (bool p_success, ) = payable(prPoolAddress).call{value: prBalance}("");
+        require(r_success == true, "Transfer failed.");
+        require(p_success == true, "Transfer failed.");
         emit SwapAndCharged(tokenBalance, liquidBalance, rewardBalance, prBalance, bnbForLiquid);
     }
 
@@ -362,7 +382,13 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     function _tokenTransfer(address sender, address recipient, uint256 amount, bool takeFee) private {
         if(!takeFee)
             removeAllFee();
-        uint256 tTransferAmount = _getFeeValues(amount);
+        uint256 tTransferAmount = 0;
+        if (recipient == pancakeswapV2Pair) {
+             tTransferAmount = _getSellFeeValues(amount);
+        } else if (sender == pancakeswapV2Pair) {
+            tTransferAmount = _getBuyFeeValues(amount);
+        }
+
         _balances[sender] = _balances[sender].sub(amount);
         _balances[recipient] = _balances[recipient].add(tTransferAmount);
         _balances[address(this)] = _balances[address(this)].add(amount.sub(tTransferAmount));
