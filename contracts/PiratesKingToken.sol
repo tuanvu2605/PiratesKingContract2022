@@ -42,7 +42,6 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
 
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
-    bool public presaleEnded = true;
     // 00
     uint256 public _maxTxAmount =  7 * 10**6 * 10**18;
     uint256 private numTokensToSwap =  1 * 10**3 * 10**18;
@@ -172,9 +171,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
         swapCoolDownTime = timeForContract;
         emit UpdatedCoolDowntime(timeForContract);
     }
-    function updatePresaleStatus(bool status) external onlyOwner {
-        presaleEnded = status;
-    }
+
 
     function excludeFromFee(address account) external onlyOwner {
         _isExcludedFromFee[account] = true;
@@ -188,6 +185,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
 
     function setFees(uint256 bnbFee, uint256 liquidityFee, uint256 prFee, uint256 buyFee) external onlyOwner() {
         require(_BNBFee != bnbFee || _liquidityFee != liquidityFee || _PRFee != prFee || _buyFee != buyFee);
+        require(_BNBFee < 15 && _liquidityFee < 15 && _PRFee < 15 && _buyFee < 15);
         _BNBFee = bnbFee;
         _liquidityFee = liquidityFee;
         _PRFee = prFee;
@@ -196,6 +194,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
     }
 
     function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {
+        require(maxTxAmount > 0 , 'maxTxAmount must > 0');
         _maxTxAmount = maxTxAmount;
         emit UpdatedMaxTxAmount(maxTxAmount);
     }
@@ -270,9 +269,6 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
         require(from != address(0), "BEP20: transfer from the zero address");
         require(to != address(0), "BEP20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
-        if (to == pancakeswapV2Pair && balanceOf(pancakeswapV2Pair) == 0) {
-            require(presaleEnded == true, "You are not allowed to add liquidity before presale is ended");
-        }
         if(
             !_isExcludedFromFee[from] &&
         !_isExcludedFromFee[to] &&
@@ -339,9 +335,9 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
 
         (bool r_success, ) = payable(bnbPoolAddress).call{value: rewardBalance}("");
         (bool p_success, ) = payable(prPoolAddress).call{value: prBalance}("");
-        require(r_success == true, "Transfer failed.");
-        require(p_success == true, "Transfer failed.");
-        emit SwapAndCharged(tokenBalance, liquidBalance, rewardBalance, prBalance, bnbForLiquid);
+        if(r_success && p_success) {
+            emit SwapAndCharged(tokenBalance, liquidBalance, rewardBalance, prBalance, bnbForLiquid);
+        }
     }
 
 
