@@ -10,7 +10,7 @@ import "./IPancakeswapV2Factory.sol";
 import "./IPancakeswapV2Router02.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
-contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
+contract PiratesKingToken is Context, IBEP20, Ownable {
     using SafeMath for uint256;
 
     mapping (address => uint256) private _balances;
@@ -43,7 +43,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
     // 00
-    uint256 public _maxTxAmount =  7 * 10**6 * 10**18;
+    uint256 public _maxTxAmount =  10 * 10**6 * 10**18;
     uint256 private numTokensToSwap =  1 * 10**3 * 10**18;
     uint256 public swapCoolDownTime = 0;
     uint256 private lastSwapTime;
@@ -64,6 +64,8 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
     event UpdatePRPoolAddress(address account);
     event SwapAndCharged(uint256 token, uint256 liquidAmount, uint256 bnbPool, uint256 prPool, uint256 bnbLiquidity);
     event UpdatedCoolDowntime(uint256 timeForContract);
+    event SwapTokensForEth(bool status);
+    event AddLiquidity (bool status);
     modifier lockTheSwap {
         inSwapAndLiquify = true;
         _;
@@ -93,13 +95,6 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
         emit Transfer(address(0), owner(), _tTotal);
     }
 
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
-    }
 
     function symbol() external view override returns (string memory) {
         return _symbol;
@@ -125,21 +120,21 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
         return _balances[account];
     }
 
-    function transfer(address recipient, uint256 amount) public override whenNotPaused returns (bool) {
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
 
-    function allowance(address owner, address spender) public view override whenNotPaused returns (uint256) {
+    function allowance(address owner, address spender) public view override returns (uint256) {
         return _allowances[owner][spender];
     }
 
-    function approve(address spender, uint256 amount) public override whenNotPaused returns (bool) {
+    function approve(address spender, uint256 amount) public override returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
 
-    function transferFrom(address sender, address recipient, uint256 amount) public override  whenNotPaused returns (bool) {
+    function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
         _transfer(sender, recipient, amount);
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "BEP20: transfer amount exceeds allowance"));
         return true;
@@ -193,10 +188,10 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
         emit UpdateFees(bnbFee, liquidityFee, prFee, buyFee);
     }
 
-    function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {
-        require(maxTxAmount > 0 , 'maxTxAmount must > 0');
-        _maxTxAmount = maxTxAmount;
-        emit UpdatedMaxTxAmount(maxTxAmount);
+    function setMaxTxAmount(uint256 percent) external onlyOwner() {
+        require(percent > 1 , 'percent must > 1');
+        _maxTxAmount = _tTotal.mul(percent).div(10**2);
+        emit UpdatedMaxTxAmount(_maxTxAmount);
     }
 
     function setNumTokensToSwap(uint256 amount) external onlyOwner() {
@@ -350,13 +345,17 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
         _approve(address(this), address(pancakeswapV2Router), tokenAmount);
 
         // make the swap
-        pancakeswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+        try pancakeswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
             tokenAmount,
             0, // accept any amount of ETH
             path,
             address(this),
             block.timestamp
-        );
+        ) {
+            emit SwapTokensForEth(true);
+        } catch Error(string memory /*reason*/) {
+            emit SwapTokensForEth(false);
+        }
     }
 
     function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
@@ -364,14 +363,18 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
         _approve(address(this), address(pancakeswapV2Router), tokenAmount);
 
         // add the liquidity
-        pancakeswapV2Router.addLiquidityETH{value: ethAmount}(
+        try pancakeswapV2Router.addLiquidityETH{value: ethAmount}(
             address(this),
             tokenAmount,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
             owner(),
             block.timestamp
-        );
+        ) {
+            emit AddLiquidity(true);
+        } catch Error(string memory /*reason*/) {
+            emit AddLiquidity(false);
+        }
     }
 
     //this method is responsible for taking all fee, if takeFee is true
@@ -389,6 +392,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable, Pausable {
         _balances[recipient] = _balances[recipient].add(tTransferAmount);
         _balances[address(this)] = _balances[address(this)].add(amount.sub(tTransferAmount));
         emit Transfer(sender, recipient, tTransferAmount);
+        emit Transfer(sender, address(this) , amount.sub(tTransferAmount));
 
         if(!takeFee)
             restoreAllFee();
