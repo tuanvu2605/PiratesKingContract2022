@@ -180,7 +180,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
 
     function setFees(uint256 bnbFee, uint256 liquidityFee, uint256 prFee, uint256 buyFee) external onlyOwner() {
         require(_BNBFee != bnbFee || _liquidityFee != liquidityFee || _PRFee != prFee || _buyFee != buyFee);
-        require(_BNBFee < 15 && _liquidityFee < 15 && _PRFee < 15 && _buyFee < 15);
+        require( _BNBFee +  _liquidityFee  + _PRFee < 15  && _buyFee < 10);
         _BNBFee = bnbFee;
         _liquidityFee = liquidityFee;
         _PRFee = prFee;
