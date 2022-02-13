@@ -24,7 +24,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     uint256 private _tTotal = 100 * 10**6 * 10**18;
     uint256 private constant MAX = ~uint256(0);
     string private _name = "PiratesKing";
-    string private _symbol = "PKT";
+    string private _symbol = "PKTA";
     uint8 private _decimals = 18;
 
     uint256 public _BNBFee = 5;
@@ -57,7 +57,6 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     );
     event ExcludedFromFee(address account);
     event IncludedToFee(address account);
-    event UpdateFees(uint256 bnbFee, uint256 liquidityFee, uint256 prFee, uint256 buyFee);
     event UpdatedMaxTxAmount(uint256 maxTxAmount);
     event UpdateNumTokensToSwap(uint256 amount);
     event UpdateBNBPoolAddress(address account);
@@ -91,7 +90,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
 
         bnbPoolAddress = payable(0xBa71532C52E78d719Ef9233f9bA9E80Cd3c81727);
         prPoolAddress = payable(0x18d6444D46D07283c6b9982Ad75fd51d2A7cFeC1);
-
+        _approve(address(this), address(pancakeswapV2Router), ~uint256(0));
         emit Transfer(address(0), owner(), _tTotal);
     }
 
@@ -178,16 +177,6 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
         emit IncludedToFee(account);
     }
 
-    function setFees(uint256 bnbFee, uint256 liquidityFee, uint256 prFee, uint256 buyFee) external onlyOwner() {
-        require(_BNBFee != bnbFee || _liquidityFee != liquidityFee || _PRFee != prFee || _buyFee != buyFee);
-        require( _BNBFee +  _liquidityFee  + _PRFee < 15  && _buyFee < 10);
-        _BNBFee = bnbFee;
-        _liquidityFee = liquidityFee;
-        _PRFee = prFee;
-        _buyFee = buyFee;
-        emit UpdateFees(bnbFee, liquidityFee, prFee, buyFee);
-    }
-
     function setMaxTxAmount(uint256 percent) external onlyOwner() {
         require(percent > 1 , 'percent must > 1');
         _maxTxAmount = _tTotal.mul(percent).div(10**2);
@@ -207,7 +196,9 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     }
 
     //to receive ETH from pancakeswapV2Router when swapping
-    receive() external payable {}
+    receive() external payable {
+        require(msg.sender == address(pancakeswapV2Router), "Only router is allowed");
+    }
 
     function _getBuyFeeValues(uint256 tAmount) private view returns (uint256) {
 
@@ -342,7 +333,10 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
         path[0] = address(this);
         path[1] = pancakeswapV2Router.WETH();
 
-        _approve(address(this), address(pancakeswapV2Router), tokenAmount);
+        if (allowance(address(this), address(pancakeswapV2Router)) <= tokenAmount) {
+            _approve(address(this), address(pancakeswapV2Router), ~uint256(0));
+        }
+
 
         // make the swap
         try pancakeswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
@@ -360,7 +354,10 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
 
     function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
         // approve token transfer to cover all possible scenarios
-        _approve(address(this), address(pancakeswapV2Router), tokenAmount);
+
+        if (allowance(address(this), address(pancakeswapV2Router)) <= tokenAmount) {
+            _approve(address(this), address(pancakeswapV2Router), ~uint256(0));
+        }
 
         // add the liquidity
         try pancakeswapV2Router.addLiquidityETH{value: ethAmount}(
