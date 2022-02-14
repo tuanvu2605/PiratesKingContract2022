@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "./IPancakeswapV2Factory.sol";
 import "./IPancakeswapV2Router02.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 
 contract PiratesKingToken is Context, IBEP20, Ownable {
     using SafeMath for uint256;
@@ -24,7 +23,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     uint256 private _tTotal = 100 * 10**6 * 10**18;
     uint256 private constant MAX = ~uint256(0);
     string private _name = "PiratesKing";
-    string private _symbol = "PKTA";
+    string private _symbol = "PKT";
     uint8 private _decimals = 18;
 
     uint256 public _BNBFee = 5;
@@ -73,9 +72,9 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
 
     constructor () {
         //Test Net
-        IPancakeswapV2Router02 _pancakeswapV2Router = IPancakeswapV2Router02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
+//        IPancakeswapV2Router02 _pancakeswapV2Router = IPancakeswapV2Router02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
         //Main Net
-//        IPancakeswapV2Router02 _pancakeswapV2Router = IPancakeswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        IPancakeswapV2Router02 _pancakeswapV2Router = IPancakeswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
 
         pancakeswapV2Pair = IPancakeswapV2Factory(_pancakeswapV2Router.factory())
         .createPair(address(this), _pancakeswapV2Router.WETH());
