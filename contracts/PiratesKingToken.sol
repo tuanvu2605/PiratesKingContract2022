@@ -26,13 +26,13 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     string private _symbol = "PKT";
     uint8 private _decimals = 18;
 
-    uint256 public _BNBFee = 5;
+    uint256 public _BNBFee = 0;
     uint256 private _previousBNBFee = _BNBFee;
-    uint256 public  _PRFee = 2;
+    uint256 public  _PRFee = 0;
     uint256 private _previousPRFee = _PRFee;
-    uint256 public _buyFee = 4;
+    uint256 public _buyFee = 0;
     uint256 private _previousBuyFee = _buyFee;
-    uint256 public _liquidityFee = 1;
+    uint256 public _liquidityFee = 0;
     uint256 private _previousLiquidityFee = _liquidityFee;
 
 
@@ -40,9 +40,9 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     address public pancakeswapV2Pair;
 
     bool inSwapAndLiquify;
-    bool public swapAndLiquifyEnabled = true;
+    bool public swapAndLiquifyEnabled = false;
     // 00
-    uint256 public _maxTxAmount =  10 * 10**6 * 10**18;
+    uint256 public _maxTxAmount =  100 * 10**6 * 10**18;
     uint256 private numTokensToSwap =  1 * 10**3 * 10**18;
     uint256 public swapCoolDownTime = 0;
     uint256 private lastSwapTime;
@@ -56,6 +56,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     );
     event ExcludedFromFee(address account);
     event IncludedToFee(address account);
+    event UpdateFees(uint256 bnbFee, uint256 liquidityFee, uint256 prFee, uint256 buyFee);
     event UpdatedMaxTxAmount(uint256 maxTxAmount);
     event UpdateNumTokensToSwap(uint256 amount);
     event UpdateBNBPoolAddress(address account);
@@ -174,6 +175,15 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     function includeInFee(address account) external onlyOwner {
         _isExcludedFromFee[account] = false;
         emit IncludedToFee(account);
+    }
+
+    function setFees(uint256 bnbFee, uint256 liquidityFee, uint256 prFee, uint256 buyFee) external onlyOwner() {
+        require(bnbFee + liquidityFee + prFee <= 8  &&  buyFee <= 4);
+        _BNBFee = bnbFee;
+        _liquidityFee = liquidityFee;
+        _PRFee = prFee;
+        _buyFee = buyFee;
+        emit UpdateFees(bnbFee, liquidityFee, prFee, buyFee);
     }
 
     function setMaxTxAmount(uint256 percent) external onlyOwner() {
@@ -377,7 +387,7 @@ contract PiratesKingToken is Context, IBEP20, Ownable {
     function _tokenTransfer(address sender, address recipient, uint256 amount, bool takeFee) private {
         if(!takeFee)
             removeAllFee();
-        uint256 tTransferAmount = 0;
+        uint256 tTransferAmount = amount;
         if (recipient == pancakeswapV2Pair) {
              tTransferAmount = _getSellFeeValues(amount);
         } else if (sender == pancakeswapV2Pair) {
