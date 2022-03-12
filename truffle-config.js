@@ -17,12 +17,13 @@
  * phrase from a file you've .gitignored so it doesn't accidentally become public.
  *
  */
-
+// const HDWalletProvider = require("truffle-hdwallet-provider-privkey");
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 // const infuraKey = "fj4jll3k.....";
 //
 const fs = require('fs');
 const mnemonic = "destroy proof vapor siege craft neutral keen trip garment foam isolate sister";
+// const private_key = ["417e56ab56674df3992a8b576bb38081a9cf87e348bbdf0ad9818c6ce6b59341"]
 
 module.exports = {
   /**
@@ -48,7 +49,7 @@ module.exports = {
       network_id: "*",       // Any network (default: none)
     },
     testnet: {
-      provider: () => new HDWalletProvider(mnemonic, `wss://data-seed-prebsc-2-s3.binance.org:8545/`),
+      provider: () => new HDWalletProvider(mnemonic, `https://data-seed-prebsc-1-s1.binance.org:8545/`),
       network_id: 97,
       confirmations: 10,
       timeoutBlocks: 200,
