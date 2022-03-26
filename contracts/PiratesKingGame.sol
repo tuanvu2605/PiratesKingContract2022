@@ -74,7 +74,7 @@ contract PiratesKingGame is Context, Ownable, IPiratesKingBase
         rewardPool = payable(0x6D5527D0c4494Dd9D8a2Fad80FF7872558eD9FdC);
         devPool = payable(0x9B5b98D20042c29293289Fea8324ef1584e9c78E);
         pktContract = payable(0x4cbd8ADCD7eCa7D1B71ADbBF484F1e8014681a9D);
-        chestContract = payable(0x4b9E79936be974Ca4bEeffe160cceDa11f5c4400);
+        chestContract = payable(0x9B2f05e4c4cE1798450DB0Db99cec46E130d6c90);
         baseCost = 1500*10**18;
         baseCostChestVip = 2000*10**18;
         baseCostItemChest = 1000*10**18;
@@ -232,6 +232,26 @@ contract PiratesKingGame is Context, Ownable, IPiratesKingBase
         trans.amount = _amount;
         trans.timestamp = block.timestamp;
         trans.t_type = "Upgrade_Level";
+        trans.wallet = _msgSender();
+        _transInfo[trans_id] = trans;
+
+        emit NewLevelUpgrade(_msgSender(), _idLevel, _amount, _idPirate);
+    }
+
+    function playerRefillEnergy(string memory  _idPirate, uint256 _amount, string memory _idLevel, string memory trans_id)
+    external
+    payable
+    {
+        require(IBEP20(pktContract).transferFrom(
+                _msgSender(),
+                devPool,
+                _amount
+            ), "Deposit failed");
+
+        TransactionInfo memory trans ;
+        trans.amount = _amount;
+        trans.timestamp = block.timestamp;
+        trans.t_type = "Refill_Energy";
         trans.wallet = _msgSender();
         _transInfo[trans_id] = trans;
 

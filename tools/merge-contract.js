@@ -12,6 +12,6 @@ async function mergeContract(contractFile) {
 }
 
 async function main() {
-    await mergeContract("./contracts/StakingRewards.sol");
+    await mergeContract("./contracts/PiratesKingGame.sol");
 }
 main();

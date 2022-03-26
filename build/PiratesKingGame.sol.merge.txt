@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 pragma abicoder v2;
 
 
-// SPDX-License-Identifier: MIT
+
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 /**
  * @dev Provides information about the current execution context, including the
@@ -24,7 +24,7 @@ abstract contract Context {
     }
 }
 
-// SPDX-License-Identifier: MIT
+
 // OpenZeppelin Contracts v4.4.1 (utils/math/SafeMath.sol)
 // CAUTION
 // This version of SafeMath should only be used with Solidity 0.8 or later,
@@ -248,7 +248,7 @@ library SafeMath {
     }
 }
 
-// SPDX-License-Identifier: MIT
+
 // OpenZeppelin Contracts v4.4.1 (access/Ownable.sol)
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -425,7 +425,7 @@ interface IBEP20 {
     );
 }
 
-// SPDX-License-Identifier: MIT
+
 /**
  * @dev {ERC721} token, including:
  */
@@ -445,7 +445,7 @@ interface IPiratesKingBase {
     }
 }
 
-// SPDX-License-Identifier: MIT
+
 interface IPiratesKingChest is IPiratesKingBase {
     function openChest(address _owner, uint256 _tokenId)
         external
@@ -459,7 +459,7 @@ interface IPiratesKingChest is IPiratesKingBase {
     ) external returns (uint256);
 }
 
-// SPDX-License-Identifier: MIT
+
 contract PiratesKingGame is Context, Ownable, IPiratesKingBase
 {
 
@@ -525,7 +525,7 @@ contract PiratesKingGame is Context, Ownable, IPiratesKingBase
         rewardPool = payable(0x6D5527D0c4494Dd9D8a2Fad80FF7872558eD9FdC);
         devPool = payable(0x9B5b98D20042c29293289Fea8324ef1584e9c78E);
         pktContract = payable(0x4cbd8ADCD7eCa7D1B71ADbBF484F1e8014681a9D);
-        chestContract = payable(0x4b9E79936be974Ca4bEeffe160cceDa11f5c4400);
+        chestContract = payable(0x9B2f05e4c4cE1798450DB0Db99cec46E130d6c90);
         baseCost = 1500*10**18;
         baseCostChestVip = 2000*10**18;
         baseCostItemChest = 1000*10**18;
