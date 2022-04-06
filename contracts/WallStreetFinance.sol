@@ -481,10 +481,10 @@ contract WallStreetFinance is ERC20Detailed, Ownable {
         );
 
         lpReceiver = 0x5562640B953b6c2f79a655E930aFa68b2a65C627;
-        treasuryReceiver = 0xa9c6d0cc785569b450393A69599E97fAED5D9dd9;
-        insuranceReceiver = 0x082D0FbCA3D80b2d4A05E20bFc227523bE8EFEF3;
-        wsfBankReceiver = 0x0000000000000000000000000000000000000000;
-        nftHolderReceiver = 0x0000000000000000000000000000000000000000;
+        treasuryReceiver = 0xa9fe433E3014772bbfeA2B56F8F23CD7b87B2cbb;
+        insuranceReceiver = 0x180f8387A0538ee058D305877df5acdBa0947498;
+        wsfBankReceiver = 0xEF0935155365db7496304bedc964470C589b9916;
+        nftHolderReceiver = 0x741490Fa4c7C67c395C0b5F78a1D6Baaaaa75a09;
         firePit = 0x0000000000000000000000000000000000000000;
 
         _allowedFragments[address(this)][address(router)] = uint256(-1);
@@ -492,12 +492,12 @@ contract WallStreetFinance is ERC20Detailed, Ownable {
         pairContract = IPancakeSwapPair(pair);
 
         _totalSupply = INITIAL_FRAGMENTS_SUPPLY;
-        _gonBalances[_msgSender()] = TOTAL_GONS;
+        _gonBalances[owner()] = TOTAL_GONS;
         _gonsPerFragment = TOTAL_GONS.div(_totalSupply);
         _initRebaseStartTime = block.timestamp;
-        _lastRebasedTime = block.timestamp;
+        _lastRebasedTime = block.number;
 
-        _isFeeExempt[_msgSender()] = true;
+        _isFeeExempt[owner()] = true;
         _isFeeExempt[address(this)] = true;
 
         emit Transfer(address(0x0),  owner(), _totalSupply);
@@ -506,34 +506,42 @@ contract WallStreetFinance is ERC20Detailed, Ownable {
     function rebase() internal {
 
         if ( inSwap ) return;
-        uint256 rebaseRate;
-        uint256 deltaTimeFromInit = block.timestamp - _initRebaseStartTime;
-        uint256 deltaTime = block.timestamp - _lastRebasedTime;
-        uint256 times = deltaTime.div(15 minutes);
-        uint256 epoch = times.mul(15);
 
-        if (deltaTimeFromInit < (365 days)) {
-            rebaseRate = 2355;
-        } else if (deltaTimeFromInit >= (7 * 365 days)) {
-            rebaseRate = 2;
-        } else if (deltaTimeFromInit >= ((15 * 365 days) / 10)) {
-            rebaseRate = 14;
-        } else if (deltaTimeFromInit >= (365 days)) {
-            rebaseRate = 211;
+        uint deno = 10**7 * 10**18;
+        uint rebaseRate = 858 * 10**18;
+        uint minuteRebaseRate = 17100 * 10**18;
+        uint hourRebaseRate = 1000000 * 10**18;
+        uint dayRebaseRate = 188800000 * 10**18;
+
+        uint blockCount = block.number.sub(_lastRebasedTime);
+        uint tmp = _totalSupply;
+        for (uint idx = 0; idx < blockCount.mod(20); idx++) { // 3 sec rebase
+            // S' = S(1+p)^r
+            tmp = tmp.mul(deno.mul(100).add(rebaseRate)).div(deno.mul(100));
         }
 
-        for (uint256 i = 0; i < times; i++) {
-            _totalSupply = _totalSupply
-            .mul((10**RATE_DECIMALS).add(rebaseRate))
-            .div(10**RATE_DECIMALS);
+        for (uint idx = 0; idx < blockCount.div(20).mod(60); idx++) { // 1 min rebase
+            // S' = S(1+p)^r
+            tmp = tmp.mul(deno.mul(100).add(minuteRebaseRate)).div(deno.mul(100));
         }
 
-        _gonsPerFragment = TOTAL_GONS.div(_totalSupply);
-        _lastRebasedTime = _lastRebasedTime.add(times.mul(15 minutes));
+        for (uint idx = 0; idx < blockCount.div(20 * 60).mod(24); idx++) { // 1 hour rebase
+            // S' = S(1+p)^r
+            tmp = tmp.mul(deno.mul(100).add(hourRebaseRate)).div(deno.mul(100));
+        }
+
+        for (uint idx = 0; idx < blockCount.div(20 * 60 * 24); idx++) { // 1 day rebase
+            // S' = S(1+p)^r
+            tmp = tmp.mul(deno.mul(100).add(dayRebaseRate)).div(deno.mul(100));
+        }
+
+        _totalSupply = tmp;
+        _gonsPerFragment = TOTAL_GONS.div(tmp);
+        _lastRebasedTime = block.number;
 
         pairContract.sync();
 
-        emit Rebased(epoch, _totalSupply);
+        emit Rebased(block.timestamp, _totalSupply);
     }
 
     function transfer(address to, uint256 value)
@@ -775,7 +783,7 @@ contract WallStreetFinance is ERC20Detailed, Ownable {
         (_totalSupply < MAX_SUPPLY) &&
         msg.sender != pair  &&
         !inSwap &&
-        block.timestamp >= (_lastRebasedTime + 15 minutes);
+        block.number >= (_lastRebasedTime + 1);
     }
 
     function shouldAddLiquidity() internal view returns (bool) {
@@ -795,7 +803,7 @@ contract WallStreetFinance is ERC20Detailed, Ownable {
     function setAutoRebase(bool _flag) external onlyOwner {
         if (_flag) {
             _autoRebase = _flag;
-            _lastRebasedTime = block.timestamp;
+            _lastRebasedTime = block.number;
         } else {
             _autoRebase = _flag;
         }

@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 pragma abicoder v2;
 
 
-
+// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 /**
  * @dev Provides information about the current execution context, including the
@@ -24,7 +24,7 @@ abstract contract Context {
     }
 }
 
-
+// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/math/SafeMath.sol)
 // CAUTION
 // This version of SafeMath should only be used with Solidity 0.8 or later,
@@ -248,7 +248,7 @@ library SafeMath {
     }
 }
 
-
+// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (access/Ownable.sol)
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -425,7 +425,7 @@ interface IBEP20 {
     );
 }
 
-
+// SPDX-License-Identifier: MIT
 /**
  * @dev {ERC721} token, including:
  */
@@ -445,7 +445,7 @@ interface IPiratesKingBase {
     }
 }
 
-
+// SPDX-License-Identifier: MIT
 interface IPiratesKingChest is IPiratesKingBase {
     function openChest(address _owner, uint256 _tokenId)
         external
@@ -459,7 +459,7 @@ interface IPiratesKingChest is IPiratesKingBase {
     ) external returns (uint256);
 }
 
-
+// SPDX-License-Identifier: MIT
 contract PiratesKingGame is Context, Ownable, IPiratesKingBase
 {
 
@@ -683,6 +683,26 @@ contract PiratesKingGame is Context, Ownable, IPiratesKingBase
         trans.amount = _amount;
         trans.timestamp = block.timestamp;
         trans.t_type = "Upgrade_Level";
+        trans.wallet = _msgSender();
+        _transInfo[trans_id] = trans;
+
+        emit NewLevelUpgrade(_msgSender(), _idLevel, _amount, _idPirate);
+    }
+
+    function playerRefillEnergy(string memory  _idPirate, uint256 _amount, string memory _idLevel, string memory trans_id)
+    external
+    payable
+    {
+        require(IBEP20(pktContract).transferFrom(
+                _msgSender(),
+                devPool,
+                _amount
+            ), "Deposit failed");
+
+        TransactionInfo memory trans ;
+        trans.amount = _amount;
+        trans.timestamp = block.timestamp;
+        trans.t_type = "Refill_Energy";
         trans.wallet = _msgSender();
         _transInfo[trans_id] = trans;
 
